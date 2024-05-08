@@ -1,0 +1,1 @@
+MA, Jun & Ding, Yuexiong & Cheng, Jack & Tan, Yi & Gan, Vincent & ZHANG, Jingcheng. (2019). Analyzing the Leading Causes of Traffic Fatalities Using XGBoost and Grid-Based Analysis: A City Management Perspective. IEEE Access. PP. 1-1. 10.1109/ACCESS.2019.2946401. 
