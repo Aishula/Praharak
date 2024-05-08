@@ -1,0 +1,4 @@
+source_code/venv
+source_code/.idea
+source_code/program/.idea
+source_code/program/__pycache__
