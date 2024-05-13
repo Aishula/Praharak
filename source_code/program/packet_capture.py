@@ -11,13 +11,13 @@ class PacketCapture:
             raw_socket.bind((self.interface, 0))
             while True:
                 try:
-                    raw_data = raw_socket.recvfrom(65536)
+                    raw_data, _ = raw_socket.recvfrom(65536)
                     self.packet_analyzer.analyze(raw_data)
                 except KeyboardInterrupt:
                     print("\nTerminated by user.")
                     print("Exiting...")
                     break
                 except Exception as e:
-                    print("\nAn error occurred.")
+                    print("\nAn error occurred.", e)
                     print("Exiting...")
                     break
