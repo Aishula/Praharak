@@ -5,4 +5,4 @@ class PacketHandler:
     def handle_packet(self, features):
         # Implement packet handling logic based on the extracted features
         # Analyze features, perform actions, etc.
-        pass
+        print(f"Packet Handler: {features}")
