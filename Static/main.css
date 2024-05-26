@@ -1,0 +1,90 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #e9f0f7;
+    margin: 0;
+    padding: 20px;
+}
+
+h1.siem-title {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #343a40;
+    font-size: 2rem;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/* .card {
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(219, 215, 215, 0.1);
+} */
+
+.card-header {
+    font-size: 1.25rem;
+    font-weight: bold;
+    background-color: #343a40;
+    color: #fff;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e3e3e3;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(218, 205, 205, 0.05);
+} */
+
+.table thead th {
+    background-color: #343a40;
+    color: #fff;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody td {
+    vertical-align: left;
+}
+
+/* .canvas-container {
+    width: 50%;
+    height: 80%;
+} */
+
+/* canvas {
+    width: 100% !important;
+    height: 400px !important;
+} */
+
+.table-danger {
+    background-color: #cc858b !important;
+    color: #8b1924 !important;
+}
+
+/* @media (max-width: 1000.98px) {
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media (min-width: 768px) {
+    .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 100%;
+    }
+} */
+
+/* @media (min-width: 1000px) {
+    .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+} */
