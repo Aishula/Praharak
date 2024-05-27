@@ -30,4 +30,4 @@ def index(request):
         'normal_data': json.dumps(normal_data),
         'packet_flow_rate': json.dumps(packet_flow_rate),
     }
-    return render(request, 'index.html', context)
+    return render(request, 'dashboard.html', context)

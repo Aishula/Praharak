@@ -57,7 +57,7 @@ ROOT_URLCONF = 'Praharak.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR,"Templates"],
+        'DIRS':[BASE_DIR /"Template"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -71,7 +71,7 @@ TEMPLATES = [
 ]
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "Static"]
 
 WSGI_APPLICATION = 'Praharak.wsgi.application'
 
