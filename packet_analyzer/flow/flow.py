@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from features import PacketDirection
 
 
 class Flow:
@@ -24,13 +25,14 @@ class Flow:
     def add_packet(self, packet, direction):
         """
         Add packet to the flow and update statistics
+        :param direction:
         :param packet:
         :return:
         """
         current_time = datetime.now(timezone.utc)
         packet_length = len(packet["raw_data"])
 
-        if direction == "forward":
+        if direction == PacketDirection.FORWARD:
             self.fwd_packets.append(packet)
             self.total_fwd_packets += 1
             self.fwd_packet_lengths.append(packet_length)
