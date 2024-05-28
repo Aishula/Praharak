@@ -19,7 +19,7 @@ class RawPacketCapture:
                     # Capture packet and send to flow session for processing
                     raw_data, addr = raw_socket.recvfrom(65536)
                     timestamp = datetime.now(timezone.utc)
-                    self.flow_session.process_packet(raw_data, timestamp)
+                    self.flow_session.process_packet(raw_data)
 
                 except KeyboardInterrupt:
                     print("\nTerminated by user.")
