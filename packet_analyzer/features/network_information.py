@@ -58,10 +58,10 @@ def parse_ipv4_header(data):
         src_ip = socket.inet_ntoa(src)
         dest_ip = socket.inet_ntoa(dest)
 
-        return src_ip, dest_ip, next_header, ttl, data[header_length:]
+        return src_ip, dest_ip, next_header, ttl, header_length, data[header_length:]
     except struct.error as e:
         print(f"Error unpacking IPv4 header: {e}")
-        return None, None, None, None, data
+        return None, None, None, None, None, data
 
 
 def parse_ipv6_header(data):
@@ -95,20 +95,21 @@ def parse_tcp_header(data):
     header_length = (offset_reserved >> 12) * 4
     flags = offset_reserved & 0x3F
     payload = data[header_length:]
-    return src_port, dst_port, seq, ack, header_length, flags, window, checksum, urg_ptr, payload
+    return src_port, dst_port, seq, ack, header_length, flags, window, checksum, urg_ptr, bytes(payload)
 
 
 def parse_udp_header(data):
     src_port, dst_port, length, checksum = struct.unpack('!HHHH', data[:8])
     payload = data[8:]
-    return src_port, dst_port, length, checksum, payload
+    return src_port, dst_port, length, checksum, bytes(payload)
 
 
 class Packet:
     """
     Represents a packet
     """
-    def __init__(self, raw_data):
+    def __init__(self, raw_data, timestamp):
+        self.timestamp = timestamp
         self.raw_data = raw_data
         self.src_mac = None
         self.dst_mac = None
@@ -116,11 +117,15 @@ class Packet:
         self.dst_ip = None
         self.net_proto_number = None
         self.net_proto_name = None
+        self.ip_header_length = 40
         self.trans_proto_number = None
         self.trans_proto_name = None
+        self.trans_header_length = 8
         self.ttl = None
         self.src_port = None
         self.dst_port = None
+        self.flags = None
+        self.payload = None
         self._analyze()
 
     def _analyze(self):
@@ -133,7 +138,7 @@ class Packet:
                 return
 
             if self.net_proto_number == 0x0800:  # IPv4
-                self.src_ip, self.dst_ip, self.trans_proto_number, self.ttl, payload = (
+                self.src_ip, self.dst_ip, self.trans_proto_number, self.ttl, self.ip_header_length, payload = (
                     parse_ipv4_header(data))
 
             elif self.net_proto_name == 0x86DD:  # IPv6
@@ -151,14 +156,14 @@ class Packet:
             self.trans_proto_name = get_transport_protocol_name(self.net_proto_number, self.trans_proto_number)
 
             if self.trans_proto_number == 6:  # TCP
-                self.src_port, self.dst_port, seq, ack, header_length, flags, window, checksum, urg_ptr, payload = (
+                self.src_port, self.dst_port, seq, ack, self.trans_header_length, flags, window, checksum, urg_ptr, self.payload = (
                     parse_tcp_header(payload))
                 if self.src_port is None or self.dst_port is None:
                     print(f"Error: Could not parse TCP header. Skipping packet. Data length: {len(payload)}")
                     return
 
             elif self.trans_proto_number == 17:  # UDP
-                self.src_port, self.dst_port, length, checksum, payload = parse_udp_header(payload)
+                self.src_port, self.dst_port, length, checksum, self.payload = parse_udp_header(payload)
                 if self.src_port is None or self.dst_port is None:
                     print(f"Error: Could not parse UDP header. Skipping packet. Data length: {len(payload)}")
                     return
@@ -171,14 +176,18 @@ class Packet:
     def get_packet_details(self):
         packet = {
             # Basic network information
+            "timestamp": self.timestamp,
             "src_mac": self.src_mac,
             "dst_mac": self.dst_mac,
             "src_ip": self.src_ip,
             "dst_ip": self.dst_ip,
             "src_port": self.src_port,
             "dst_port": self.dst_port,
-            "protocol": self.trans_proto_number,
-            "raw_data": self.raw_data,
+            "proto": self.trans_proto_number,
+            "proto_name": self.trans_proto_name
         }
         # print(packet)
         return packet
+
+    def __str__(self):
+        return str(self.get_packet_details())

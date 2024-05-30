@@ -15,7 +15,7 @@ def list_network_interfaces():
     interfaces = netifaces.interfaces()
     print("Available network interfaces:")
     for interface in interfaces:
-        print(f"->{interface}")
+        print(f"*** {interface}")
 
 
 def main():

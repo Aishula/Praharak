@@ -57,10 +57,8 @@ class PacketCount:
 
     @staticmethod
     def get_payload(packet):
-        if "TCP" in packet:
-            return packet["TCP"].payload
-        elif "UDP" in packet:
-            return packet["UDP"].payload
+        if packet.payload is not None:
+            return packet.payload
         return 0
 
     def has_payload(self, packet_direction=None) -> int:

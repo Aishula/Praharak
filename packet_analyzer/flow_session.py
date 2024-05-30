@@ -12,36 +12,39 @@ class FlowSession:
     def __init__(self):
         self.flows = {}
         self.expiration_threshold = 40
-        self.expiry_duration = 120
-        self.garbage_collection_threshold = 100  # After 100 packet processed
+        self.expiry_duration = 60
+        self.garbage_collection_threshold = 50  # After 100 packet processed
         self.packet_count = 0
 
-    def process_packet(self, raw_data):
+    def process_packet(self, raw_data, timestamp):
         """
         Process a packet and add to the appropriate flow.
         """
-        packet = Packet(raw_data).get_packet_details()
+        packet = Packet(raw_data, timestamp)
         count = 0
         # Check if the packet contains non field or not
         # if not, then process the packet otherwise ignore the packet
-        if (packet["src_ip"] is None or packet["dst_ip"] is None or
-                packet["src_mac"] is None or packet["dst_mac"] is None or
-                packet["src_port"] is None or packet["dst_port"] is None):
+        if (packet.src_ip is None or packet.dst_ip is None or
+                packet.src_mac is None or packet.dst_mac is None or
+                packet.src_port is None or packet.dst_port is None):
             return
 
         direction = self._get_packet_direction(packet)
         flow_key = packet_flow_key.get_packet_flow_key(packet, direction)
         print("FLOW ID: ", flow_key)
+        print(self.flows.values())
+        print(direction)
         flow = self.flows.get((flow_key, count))
 
         self.packet_count += 1
 
         # if flow id is not in flows, add it
         # Otherwise add packet to the existing flow
-        if flow_key not in self.flows:
-            self.flows[(flow_key, count)] = Flow(packet, direction)
+        if flow is None:
+            flow = Flow(packet, direction)
+            self.flows[(flow_key, count)] = flow
 
-        if packet.timestamp - flow.latest_timestamp > self.expiration_threshold:
+        elif packet.timestamp - flow.latest_timestamp > self.expiration_threshold:
             expired = self.expiration_threshold
             while packet.timestamp - flow.latest_timestamp > expired:
                 count += 1
@@ -49,7 +52,8 @@ class FlowSession:
                 flow = self.flows.get((flow_key, count))
 
                 if flow is None:
-                    self.flows[(flow_key, count)] = Flow(packet, direction)
+                    flow = Flow(packet, direction)
+                    self.flows[(flow_key, count)] = flow
                     break
 
         elif "F" in str(packet.flags):

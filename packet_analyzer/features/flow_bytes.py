@@ -62,7 +62,7 @@ class FlowBytes:
         feat = self.feature
 
         return sum(
-            len(packet)
+            len(packet.raw_data)
             for packet, direction in feat.packets
             if direction == PacketDirection.FORWARD
         )
@@ -94,7 +94,7 @@ class FlowBytes:
         packets = self.feature.packets
 
         return sum(
-            len(packet)
+            len(packet.raw_data)
             for packet, direction in packets
             if direction == PacketDirection.REVERSE
         )
@@ -151,7 +151,7 @@ class FlowBytes:
         return rate
 
     def _header_size(self, packet):
-        return packet[IP].ihl * 4 if TCP in packet else 8
+        return packet.trans_header_length
 
     def get_reverse_header_bytes(self) -> int:
         """Calculates the amount of header bytes in the header sent in the opposite direction as the flow.
@@ -235,7 +235,7 @@ class FlowBytes:
 
         """
         feat = self.feature
-        return [packet["IP"].ttl for packet, _ in feat.packets][0]
+        return [packet.ttl for packet, _ in feat.packets][0]
 
     def get_bytes_per_bulk(self, packet_direction):
         if packet_direction == PacketDirection.FORWARD:

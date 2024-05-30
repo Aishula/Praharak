@@ -26,13 +26,13 @@ class PacketLength:
         """
         if packet_direction is not None:
             return [
-                len(packet)
+                len(packet.raw_data)
                 for packet, direction in self.feature.packets
                 if direction == packet_direction
             ]
-        return [len(packet) for packet, _ in self.feature.packets]
+        return [len(packet.raw_data) for packet, _ in self.feature.packets]
 
-    def get_header_length(self, packet_direction=None) -> list:
+    def get_header_length(self, packet_direction=None):
         """Creates a list of packet lengths.
 
         Returns:
@@ -41,11 +41,11 @@ class PacketLength:
         """
         if packet_direction is not None:
             return (
-                packet["IP"].ihl * 4
+                packet.ip_header_length
                 for packet, direction in self.feature.packets
                 if direction == packet_direction
             )
-        return (packet["IP"].ihl * 4 for packet, _ in self.feature.packets)
+        return (packet.ip_header_length for packet, _ in self.feature.packets)
 
     def get_total_header(self, packet_direction=None) -> int:
         """Calculates the summary header lengths.

@@ -23,9 +23,9 @@ class PacketTime:
         """
         if self.packet_times is not None:
             return self.packet_times
-        first_packet_time = self.flow.packets[0][0].time
+        first_packet_time = self.flow.packets[0][0].timestamp
         packet_times = [
-            float(packet.time - first_packet_time) for packet, _ in self.flow.packets
+            float(packet.timestamp - first_packet_time) for packet, _ in self.flow.packets
         ]
         return packet_times
 
@@ -41,7 +41,7 @@ class PacketTime:
 
         packet_iat = []
         for i in range(1, len(packets)):
-            packet_iat.append(1e6 * float(packets[i].time - packets[i - 1].time))
+            packet_iat.append(1e6 * float(packets[i].timestamp - packets[i - 1].timestamp))
 
         return packet_iat
 
@@ -67,7 +67,7 @@ class PacketTime:
             String of Date and time.
 
         """
-        time = self.flow.packets[0][0].time
+        time = self.flow.packets[0][0].timestamp
         date_time = datetime.fromtimestamp(time).strftime("%Y-%m-%d %H:%M:%S")
         return date_time
 
