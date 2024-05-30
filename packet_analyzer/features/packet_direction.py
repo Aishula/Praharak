@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 class PacketDirection(Enum):
     """
     Enum for packet direction
     """
-    FORWARD = 1
-    BACKWARD = 2
+    FORWARD = auto()
+    REVERSE = auto()

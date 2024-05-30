@@ -1,3 +1,4 @@
+from features import packet_flow_key
 from flow import Flow
 from features.network_information import Packet
 from features import PacketDirection
@@ -7,9 +8,11 @@ class FlowSession:
     """
     Manages network flow sessions.
     """
+
     def __init__(self):
         self.flows = {}
-        self.expiration_threshold = 120  # 2 minutes
+        self.expiration_threshold = 40
+        self.expiry_duration = 120
         self.garbage_collection_threshold = 100  # After 100 packet processed
         self.packet_count = 0
 
@@ -18,59 +21,68 @@ class FlowSession:
         Process a packet and add to the appropriate flow.
         """
         packet = Packet(raw_data).get_packet_details()
+        count = 0
+        # Check if the packet contains non field or not
+        # if not, then process the packet otherwise ignore the packet
+        if (packet["src_ip"] is None or packet["dst_ip"] is None or
+                packet["src_mac"] is None or packet["dst_mac"] is None or
+                packet["src_port"] is None or packet["dst_port"] is None):
+            return
+
         direction = self._get_packet_direction(packet)
-        flow_key = self._get_packet_flow_key(packet, direction)
-        # print("FLOW ID: ", flow_key)
+        flow_key = packet_flow_key.get_packet_flow_key(packet, direction)
+        print("FLOW ID: ", flow_key)
+        flow = self.flows.get((flow_key, count))
+
+        self.packet_count += 1
 
         # if flow id is not in flows, add it
         # Otherwise add packet to the existing flow
         if flow_key not in self.flows:
-            self.flows[flow_key] = Flow(flow_key)
-        self.flows[flow_key].add_packet(packet, direction)
-        self.packet_count += 1
+            self.flows[(flow_key, count)] = Flow(packet, direction)
 
-        # finally call to garbage collection
-        self._perform_garbage_collection()
+        if packet.timestamp - flow.latest_timestamp > self.expiration_threshold:
+            expired = self.expiration_threshold
+            while packet.timestamp - flow.latest_timestamp > expired:
+                count += 1
+                expired += self.expiration_threshold
+                flow = self.flows.get((flow_key, count))
 
-    def _perform_garbage_collection(self):
+                if flow is None:
+                    self.flows[(flow_key, count)] = Flow(packet, direction)
+                    break
+
+        elif "F" in str(packet.flags):
+            flow.add_packet(packet, direction)
+            self._perform_garbage_collection(packet.timestamp)
+            return
+
+        flow.add_packet(packet, direction)
+
+        if self.packet_count % self.garbage_collection_threshold == 0 or (
+                flow.duration > self.expiry_duration):
+            self._perform_garbage_collection(packet.timestamp)
+
+    def _get_flows(self):
+        return self.flows.values()
+
+    def _perform_garbage_collection(self, latest_timestamp) -> None:
         """
         Remove flows that are either expired or reached the garbage collection threshold
         """
-        if len(self.flows) % self.garbage_collection_threshold == 0:
-            keys_to_delete = []
-            for flow_id, flow in self.flows.items():
-                if flow.is_expired(self.expiration_threshold):
-                    # If flow is expired, get all the features and remove it
-                    features = flow.get_features()
-                    print(features)
-                    keys_to_delete.append(flow_id)
-            for flow_id in keys_to_delete:
-                del self.flows[flow_id]
+        print("Performing garbage collection check...")  # Debugging line
+        print(
+            f"Current number of flows: {len(self.flows)}")  # Debugging line
 
-    @staticmethod
-    def _get_packet_flow_key(packet, direction) -> tuple:
-        """
-        Generate the unique flow id for the packet and determine packet direction
-        :param packet: Packet object from features.network_information
-        :param direction: PacketDirection
-        :return: String
-        """
-        if direction == PacketDirection.FORWARD:
-            src_ip = packet['src_ip']
-            dst_ip = packet['dst_ip']
-            src_mac = packet['src_mac']
-            dst_mac = packet['dst_mac']
-            src_port = packet['src_port']
-            dst_port = packet['dst_port']
-        else:
-            src_ip = packet['dst_ip']
-            dst_ip = packet['src_ip']
-            src_mac = packet['dst_mac']
-            dst_mac = packet['src_mac']
-            src_port = packet['dst_port']
-            dst_port = packet['src_port']
-
-        return src_ip, dst_ip, src_mac, dst_mac, src_port, dst_port
+        keys = list(self.flows.keys())
+        for k in keys:
+            flow = self.flows.get(k)
+            if (latest_timestamp is None or
+                    latest_timestamp - flow.latest_timestamp > self.expiration_threshold or
+                    flow.duration > self.expiry_duration):
+                data = flow.get_features()
+                print(data)
+                del self.flows[k]
 
     def _get_packet_direction(self, packet):
         """
@@ -78,12 +90,12 @@ class FlowSession:
         :param packet:
         :return: PacketDirection
         """
-        flow_key_forward = self._get_packet_flow_key(packet, PacketDirection.FORWARD)
-        flow_key_backward = self._get_packet_flow_key(packet, PacketDirection.BACKWARD)
+        flow_key_forward = packet_flow_key.get_packet_flow_key(packet, PacketDirection.FORWARD)
+        flow_key_backward = packet_flow_key.get_packet_flow_key(packet, PacketDirection.REVERSE)
         if flow_key_forward in self.flows:
             return PacketDirection.FORWARD
 
         elif flow_key_backward in self.flows:
-            return PacketDirection.BACKWARD
+            return PacketDirection.REVERSE
         else:
             return PacketDirection.FORWARD  # First packet in a new flow

@@ -140,7 +140,7 @@ class Packet:
                 self.src_ip, self.dst_ip, self.trans_proto_number, self.ttl, payload = (
                     parse_ipv6_header(data))
             else:
-                print("Unknown or unsupported network protocol.")
+                # print("Unknown or unsupported network protocol.")
                 return
 
             if self.src_ip is None or self.dst_ip is None:
@@ -180,5 +180,5 @@ class Packet:
             "protocol": self.trans_proto_number,
             "raw_data": self.raw_data,
         }
-        print(packet)
+        # print(packet)
         return packet
