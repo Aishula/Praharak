@@ -34,7 +34,7 @@ class FlowBytes:
         """
         feat = self.feature
 
-        return sum(len(packet) for packet, _ in feat.packets)
+        return sum(len(packet.raw_data) for packet, _ in feat.packets)
 
     def get_rate(self) -> float:
         """Calculates the rate of the bytes being transfered in the current flow.

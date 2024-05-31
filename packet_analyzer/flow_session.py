@@ -32,8 +32,8 @@ class FlowSession:
         direction = self._get_packet_direction(packet)
         flow_key = packet_flow_key.get_packet_flow_key(packet, direction)
         print("FLOW ID: ", flow_key)
-        print(self.flows.values())
-        print(direction)
+        # print(self.flows.values())
+        # print(direction)
         flow = self.flows.get((flow_key, count))
 
         self.packet_count += 1
@@ -86,6 +86,7 @@ class FlowSession:
                     flow.duration > self.expiry_duration):
                 data = flow.get_features()
                 print(data)
+                print(len(data))
                 del self.flows[k]
 
     def _get_packet_direction(self, packet):
