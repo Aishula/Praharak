@@ -2,14 +2,17 @@ from django.http import HttpResponse
 from django.shortcuts import render 
 
 
-def home(request):
-    return HttpResponse("home")
+def ws_test(request):
+    return render(request, "ws_test.html")
+
 
 def homepage(request):
-    return render (request, "dashboard.html")
+    return render(request, "dashboard.html")
+
 
 from django.shortcuts import render
 import json
+
 
 def index(request):
     # Sample data for demonstration
