@@ -2,6 +2,8 @@ from features import packet_flow_key
 from flow import Flow
 from features.network_information import Packet
 from features import PacketDirection
+from communication import Communication
+import asyncio
 
 
 class FlowSession:
@@ -15,6 +17,7 @@ class FlowSession:
         self.expiry_duration = 60
         self.garbage_collection_threshold = 100  # After 100 packet processed
         self.packet_count = 0
+        self.communication = Communication()
 
     def process_packet(self, raw_data, timestamp):
         """
@@ -118,8 +121,7 @@ class FlowSession:
                     latest_timestamp - flow.latest_timestamp > self.expiration_threshold or
                     flow.duration > self.expiry_duration):
                 data = flow.get_features()
-                print(data)
-                print(len(data))
+                asyncio.run(self.communication.communicate(data))
                 del self.flows[k]
 
     def _get_packet_direction(self, packet, count):
