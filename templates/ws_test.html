@@ -11,10 +11,12 @@
 
     <script>
         const chatSocket = new WebSocket(
-            'ws://' + window.location.host + '/ws/flow_data/'
+            'ws://' + window.location.host + '/ws/ws-test/'
         );
 
-        console.log(chatSocket)
+        chatSocket.onopen = function(e) {
+            console.log('Connection established');
+        };
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
@@ -30,7 +32,7 @@
             const messageInputDom = document.querySelector('#messageInput');
             const message = messageInputDom.value;
             chatSocket.send(JSON.stringify({
-                'message': message
+                'message': "Hello ws server"
             }));
             messageInputDom.value = '';
         }
