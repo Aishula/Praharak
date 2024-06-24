@@ -193,6 +193,31 @@
           }
       });
   </script>
+
+       <script>
+        const flowSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/flow_data/'
+        );
+
+        flowSocket.onopen = function(e) {
+            console.log('Connection established');
+        };
+
+        flowSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log({data});
+        };
+
+        flowSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        function sendMessage() {
+            flowSocket.send(JSON.stringify({
+                'message': "Hi, I'm From browser"
+            }));
+        }
+    </script>
     </div>
   </div>
 </body>

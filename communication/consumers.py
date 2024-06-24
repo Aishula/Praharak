@@ -13,9 +13,10 @@ class PacketFlowDataConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
+        print(message)
 
         await self.send(text_data=json.dumps({
-            'message': message
+            'message': "I am from django consumers"
         }))
 
     # async def receive(self, text_data):
@@ -25,3 +26,20 @@ class PacketFlowDataConsumer(AsyncWebsocketConsumer):
     #     await self.send(text_data=json.dumps({
     #         "message": "I am from django consumers"
     #     }))
+
+
+class WsTestConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        print("connected")
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        pass
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        message = data["message"]
+
+        await self.send(text_data=json.dumps({
+            "message": message
+        }))
