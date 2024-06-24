@@ -32,7 +32,7 @@ class FlowSession:
                 packet.src_port is None or packet.dst_port is None):
             return
 
-        print("Dir from fun call", self._get_packet_direction(packet, count))
+        # print("Dir from fun call", self._get_packet_direction(packet, count))
 
         # Consider the direction is forward
         # direction = PacketDirection.FORWARD
@@ -60,7 +60,7 @@ class FlowSession:
 
         direction = self._get_packet_direction(packet, count)
         flow_key = packet_flow_key.get_packet_flow_key(packet, direction)
-        print("FLOW ID: ", flow_key)
+        # print("FLOW ID: ", flow_key)
         # print(self.flows.values())
         # print(direction)
         flow = self.flows.get((flow_key, count))
