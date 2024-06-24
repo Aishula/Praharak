@@ -24,7 +24,21 @@ SECRET_KEY = 'django-insecure-u%^+g3fvc(a1*0fg5wj8p^&tm&ye6*#3j!ze4yhf3c7u4_4ii@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -42,8 +56,18 @@ INSTALLED_APPS = [
     "communication.apps.CommunicationConfig",
 ]
 
+# Channels
 ASGI_APPLICATION = 'Praharak.asgi.application'
-WSGI_APPLICATION = 'Praharak.wsgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],  # Redis server configuration
+        },
+    },
+}
+
+# WSGI_APPLICATION = 'Praharak.wsgi.application'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

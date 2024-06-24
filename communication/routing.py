@@ -1,6 +1,6 @@
-from django.urls import re_path
-from .consumers import PacketFlowDataConsumer
+from django.urls import path
+from . import consumers
 
 websocket_urlpatterns = [
-    re_path(r'ws/flow_data/$', PacketFlowDataConsumer.as_asgi()),
+    path('ws/flow_data/', consumers.PacketFlowDataConsumer.as_asgi()),
 ]
