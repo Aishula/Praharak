@@ -43,6 +43,9 @@ class PacketFlowDataConsumer(AsyncWebsocketConsumer):
             else:
                 # Store message if receiver is not yet connected
                 PacketFlowDataConsumer.pending_messages.append(message)
+            await PacketFlowDataConsumer.sender.send(text_data=json.dumps({
+                'message': "Message sent to receiver"
+            }))
 
     async def send_to_receiver(self, message):
         if PacketFlowDataConsumer.receiver:

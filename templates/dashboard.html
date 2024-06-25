@@ -205,7 +205,8 @@
 
         flowSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            console.log({data});
+            let message = data["message"];
+            console.log(message);
         };
 
         flowSocket.onclose = function(e) {
