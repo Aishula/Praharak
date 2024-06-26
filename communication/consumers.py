@@ -5,7 +5,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 class PacketFlowDataConsumer(AsyncWebsocketConsumer):
     sender = None
     receiver = None
-    pending_messages = []
+    pending_data = []
 
     async def connect(self):
         await self.accept()
@@ -19,10 +19,10 @@ class PacketFlowDataConsumer(AsyncWebsocketConsumer):
             PacketFlowDataConsumer.sender = self
             print("Sender assigned")
             # Send any pending messages to the receiver
-            if PacketFlowDataConsumer.pending_messages:
-                for msg in PacketFlowDataConsumer.pending_messages:
+            if PacketFlowDataConsumer.pending_data:
+                for msg in PacketFlowDataConsumer.pending_data:
                     await self.send_to_receiver(msg)
-                PacketFlowDataConsumer.pending_messages = []
+                PacketFlowDataConsumer.pending_data = []
 
     async def disconnect(self, close_code):
         if self == PacketFlowDataConsumer.receiver:
@@ -34,23 +34,23 @@ class PacketFlowDataConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json.get('message')
+        data = text_data_json.get('data')
 
         if self == PacketFlowDataConsumer.sender:
             # Forward message to the receiver
             if PacketFlowDataConsumer.receiver:
-                await self.send_to_receiver(message)
+                await self.send_to_receiver(data)
             else:
                 # Store message if receiver is not yet connected
-                PacketFlowDataConsumer.pending_messages.append(message)
+                PacketFlowDataConsumer.pending_data.append(data)
             await PacketFlowDataConsumer.sender.send(text_data=json.dumps({
-                'message': "Message sent to receiver"
+                'message': "Data sent to receiver"
             }))
 
-    async def send_to_receiver(self, message):
+    async def send_to_receiver(self, data):
         if PacketFlowDataConsumer.receiver:
             await PacketFlowDataConsumer.receiver.send(text_data=json.dumps({
-                'message': message
+                'data': data
             }))
 
 
