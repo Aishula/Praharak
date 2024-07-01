@@ -7,8 +7,22 @@
     .card {
       margin-bottom: 20px;
     }
+    .siem-title {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px;
+      color: #343a40;
+      font-size: 2rem;
+      border-bottom-color: antiquewhite;
+      border-bottom-style: dashed;
+}
   </style>
 {% endblock %}
+
+{% block page_title %}
+<h1 class="siem-title">Dashboard</h1>
+{% endblock %}
+
 
 {% block content %}
   <div class="row">
@@ -90,18 +104,50 @@
 {% block extra_scripts %}
   <script>
     document.addEventListener('DOMContentLoaded', (event) => {
-      const ctx = document.getElementById('networkTrafficChart').getContext('2d');
-      const networkTrafficChart = new Chart(ctx, {
+
+      // Initialize counters
+      let attackCount = 0;
+      let normalCount = 0;
+
+      // Initialize the chart
+      const attackNormalCtx = document.getElementById('attackNormalChart').getContext('2d');
+      const attackNormalChart = new Chart(attackNormalCtx, {
+        type: 'bar', // Bar chart to display the counts
+        data: {
+          labels: ['Attack Traffic', 'Normal Traffic'], // Labels for the bars
+          datasets: [
+            {
+              label: 'Traffic Count',
+              data: [attackCount, normalCount], // Initial counts
+              backgroundColor: ['red', 'blue'], // Colors for the bars
+            }
+          ]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Count'
+              }
+            }
+          }
+        }
+      });
+
+      const networkTrafficCtx = document.getElementById('networkTrafficChart').getContext('2d');
+      const networkTrafficChart = new Chart(networkTrafficCtx, {
         type: 'line',
         data: {
           labels: [], // Initialize with empty labels
           datasets: [{
             label: 'Packet Flow Rate',
             data: [], // Initialize with empty data
-            borderColor: 'rgb(25, 25, 112)',
-            backgroundColor: '#ADD8E6',
-            fill: true,
-            tension: 0.6
+            borderColor: 'rgb(230,0,246)',
+            backgroundColor: '#eeecec',
+            fill: false,
+            tension: 0.3
           }]
         },
         options: {
@@ -119,7 +165,7 @@
                 text: 'Packet Flow Rate'
               },
               min: 0,
-              max: 100000
+              max: 1000000
             }
           },
           plugins: {
@@ -145,8 +191,20 @@
         data = data["data"];
         console.log(data);
         const timestamp = data.timestamp;
-        const flowRate = data.flow_byts_s;
-        console.log(timestamp, flowRate);
+        const flowRate = data.flow_bytes_s;
+        const prediction = data.prediction;
+
+        // Update counters based on prediction
+        if (prediction === "1") {
+          attackCount++;
+        } else if (prediction === "0") {
+          normalCount++;
+        }
+        // Update chart data
+        attackNormalChart.data.datasets[0].data = [attackCount, normalCount];
+
+        // Update the chart
+        attackNormalChart.update();
 
         // Update chart data
         networkTrafficChart.data.labels.push(timestamp);
