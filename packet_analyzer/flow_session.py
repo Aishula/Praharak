@@ -194,8 +194,8 @@ class FlowSession:
                     data["idle_min"],  # 69
                 ]
                 result = ai_model.predict(features)
-                print(data, result)
-                # asyncio.run(self.communication.communicate(data))
+                data["prediction"] = f"{result}"
+                asyncio.run(self.communication.communicate(data))
                 del self.flows[k]
 
     def _get_packet_direction(self, packet, count):

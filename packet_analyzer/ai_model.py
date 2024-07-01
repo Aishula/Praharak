@@ -1,7 +1,21 @@
-
-
 import numpy as np
 from tensorflow.keras.models import load_model
+from datetime import datetime
+
+
+def convert_to_numeric(data):
+    numeric_data = []
+    for row in data:
+        numeric_row = [float(x) for x in row]
+        numeric_data.append(numeric_row)
+    return np.array(numeric_data, dtype=float)
+
+
+# Function to convert timestamp string to Unix timestamp
+def convert_timestamp_to_int(timestamp):
+    dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+    unix_timestamp = int(dt.timestamp())
+    return unix_timestamp
 
 
 class AIModel:
@@ -10,7 +24,10 @@ class AIModel:
 
     def predict(self, data):
         data = np.array(data).reshape(1, -1)  # Reshape for single instance
-        return self.model.predict(data)
+        data[0][2] = convert_timestamp_to_int(data[0][2])
+        numeric_data = convert_to_numeric(data)
+        prediction = self.model.predict(numeric_data)[0][0]
+        return (prediction > 0.5).astype(int)
 
 
 ai_model = AIModel("utils/cic_ids_2017_praharak_v5.keras")
