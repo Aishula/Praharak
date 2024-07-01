@@ -92,10 +92,17 @@ def get_transport_protocol_name(ip_version, next_header):
 def parse_tcp_header(data):
     src_port, dst_port, seq, ack, offset_reserved, flags, window, checksum, urg_ptr = (
         struct.unpack('!HHIIBBHHH', data[:20]))
-    header_length = (offset_reserved >> 12) * 4
+    header_length = (offset_reserved >> 4) * 4
     flags = offset_reserved & 0x3F
     payload = data[header_length:]
-    return src_port, dst_port, seq, ack, header_length, flags, window, checksum, urg_ptr, bytes(payload)
+    # Define the list to hold the flag indicators
+    flag_list = []
+
+    # Check if the FIN flag is set
+    FIN_MASK = 0x01
+    if flags & FIN_MASK:
+        flag_list.append('F')
+    return src_port, dst_port, seq, ack, header_length, flag_list, window, checksum, urg_ptr, bytes(payload)
 
 
 def parse_udp_header(data):
@@ -156,7 +163,7 @@ class Packet:
             self.trans_proto_name = get_transport_protocol_name(self.net_proto_number, self.trans_proto_number)
 
             if self.trans_proto_number == 6:  # TCP
-                self.src_port, self.dst_port, seq, ack, self.trans_header_length, flags, window, checksum, urg_ptr, self.payload = (
+                self.src_port, self.dst_port, seq, ack, self.trans_header_length, self.flags, window, checksum, urg_ptr, self.payload = (
                     parse_tcp_header(payload))
                 if self.src_port is None or self.dst_port is None:
                     print(f"Error: Could not parse TCP header. Skipping packet. Data length: {len(payload)}")
