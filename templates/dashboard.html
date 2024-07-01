@@ -35,38 +35,38 @@
             <thead>
               <tr>
                 <th>Source</th>
-                <th>IP</th>
+                <th>Destination</th>
                 <th>Protocol</th>
                 <th>Remarks</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Firewall</td>
+                <td>172.16.8.1</td>
                 <td>192.168.1.1</td>
                 <td>TCP</td>
                 <td>Normal</td>
               </tr>
               <tr>
-                <td>Router</td>
+                <td>128.2.12.0</td>
                 <td>192.168.1.2</td>
                 <td>UDP</td>
                 <td>Suspicious</td>
               </tr>
               <tr>
-                <td>Switch</td>
+                <td>192.168.1.34</td>
                 <td>192.168.1.3</td>
                 <td>TCP</td>
                 <td>Normal</td>
               </tr>
               <tr>
-                <td>Server</td>
+                <td>172.16.5.1</td>
                 <td>192.168.1.4</td>
                 <td>UDP</td>
                 <td>Critical</td>
               </tr>
               <tr>
-                <td>Workstation</td>
+                <td>172.16.5.10</td>
                 <td>192.168.1.5</td>
                 <td>TCP</td>
                 <td>Normal</td>
@@ -108,6 +108,11 @@
       // Initialize counters
       let attackCount = 0;
       let normalCount = 0;
+
+      // Initialize index for circular buffer
+      let index = 0;
+      let remarks = "Normal";
+      let protocol = "TCP";
 
       // Initialize the chart
       const attackNormalCtx = document.getElementById('attackNormalChart').getContext('2d');
@@ -197,8 +202,10 @@
         // Update counters based on prediction
         if (prediction === "1") {
           attackCount++;
+          remarks = "Malicious";
         } else if (prediction === "0") {
           normalCount++;
+          remarks = "Normal";
         }
         // Update chart data
         attackNormalChart.data.datasets[0].data = [attackCount, normalCount];
@@ -219,6 +226,25 @@
 
         // Update the chart
         networkTrafficChart.update();
+
+        if (data.protocol === 6) {
+          protocol = "TCP";
+        } else if (data.protocol === 17) {
+          protocol = "UDP";
+        }
+
+        // Update existing table rows using circular buffer logic
+        const tableBody = document.getElementById('logTable').getElementsByTagName('tbody')[0];
+        const rows = tableBody.getElementsByTagName('tr');
+        const cells = rows[index].getElementsByTagName('td');
+
+        cells[0].innerText = data.src_ip;
+        cells[1].innerText = data.dst_ip;
+        cells[2].innerText = protocol;
+        cells[3].innerText = remarks;
+
+        // Increment index for circular buffer
+        index = (index + 1) % rows.length;
       };
 
       flowSocket.onclose = function(e) {
