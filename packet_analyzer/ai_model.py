@@ -4,11 +4,13 @@ from datetime import datetime
 
 
 def convert_to_numeric(data):
-    numeric_data = []
-    for row in data:
-        numeric_row = [float(x) for x in row]
-        numeric_data.append(numeric_row)
-    return np.array(numeric_data, dtype=float)
+    if isinstance(data[0], list):
+        # Multiple rows
+        numeric_data = np.array([[float(x) for x in row] for row in data], dtype=float)
+    else:
+        # Single row
+        numeric_data = np.array([float(x) for x in data], dtype=float)
+    return numeric_data
 
 
 # Function to convert timestamp string to Unix timestamp
@@ -19,18 +21,51 @@ def convert_timestamp_to_int(timestamp):
 
 
 class AIModel:
-    def __init__(self, model_path):
+    def __init__(self, model_path, sequence_length=10):
         self.model = load_model(model_path)
+        self.sequence_length = sequence_length
+        self.buffer = []
+
+    def preprocess_data(self, data):
+        data = convert_to_numeric(data)
+        return data
+
+    def create_sequence(self, data):
+        self.buffer.append(data)
+        # print("Buffer:", self.buffer)
+        if len(self.buffer) < self.sequence_length:
+            return None  # Insufficient data for a full sequence
+        else:
+            # Extract the last 'sequence_length' elements from buffer
+            print("sequence is creating...")
+            sequence = self.buffer[-self.sequence_length:]
+            # sequence = self.preprocess_data(sequence)
+            return sequence
 
     def predict(self, data):
-        data = np.array(data).reshape(1, -1)  # Reshape for single instance
-        data[0][2] = convert_timestamp_to_int(data[0][2])
-        numeric_data = convert_to_numeric(data)
-        prediction = self.model.predict(numeric_data)[0][0]
+        print("Predicting...")
+        # Predict for a single data row
+        data = self.preprocess_data(data)
+        # print("After preprocessing:", data)
+        sequence = self.create_sequence(data)
+        # print("after sequence:", sequence)
+        if sequence is None:
+            print("Insufficient data to make prediction")
+            return None
+
+        sequence = np.array(sequence)
+        # Reshape for LSTM input (assuming sequence_length x num_features)
+        sequence = sequence.reshape((1, self.sequence_length, sequence.shape[1]))
+
+        # Debugging: Check the reshaped sequence shape
+        print("Reshaped sequence shape:", sequence.shape)
+        prediction = self.model.predict(sequence)[0][0]
+        # After prediction, remove the oldest element from the buffer
+        self.buffer.pop(0)
         return (prediction > 0.5).astype(int)
 
 
-ai_model = AIModel("utils/cic_ids_2017_praharak_v5.keras")
+ai_model = AIModel("utils/model_train_praharak_v1.h5")
 
 
 """

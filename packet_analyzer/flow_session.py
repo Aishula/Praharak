@@ -1,3 +1,5 @@
+import datetime
+
 from features import packet_flow_key
 from flow import Flow
 from features.network_information import Packet
@@ -125,7 +127,7 @@ class FlowSession:
                 features = [
                     data["dst_port"],  # 1
                     data["protocol"],  # 2
-                    data["timestamp"],  # 3
+                    # data["timestamp"],  # 3
                     data["flow_duration"],  # 4
                     data["total_fwd_pkts"],  # 5
                     data["total_bwd_pkts"],  # 6
@@ -194,8 +196,11 @@ class FlowSession:
                     data["idle_min"],  # 69
                 ]
                 result = ai_model.predict(features)
-                data["prediction"] = f"{result}"
-                asyncio.run(self.communication.communicate(data))
+                if result is not None:
+                    data["prediction"] = f"{result}"
+                    print(datetime.datetime.now() - datetime.datetime.strptime(data["timestamp"], "%Y-%m-%d %H:%M:%S"))
+                    print(result)
+                    asyncio.run(self.communication.communicate(data))
                 del self.flows[k]
 
     def _get_packet_direction(self, packet, count):
