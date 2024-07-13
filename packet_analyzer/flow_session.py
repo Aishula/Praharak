@@ -6,7 +6,7 @@ from features.network_information import Packet
 from features import PacketDirection
 from communication import Communication
 import asyncio
-from ai_model import ai_model
+from ai_model import ai_model, convert_timestamp_to_int
 
 
 class FlowSession:
@@ -34,6 +34,9 @@ class FlowSession:
                 packet.src_mac is None or packet.dst_mac is None or
                 packet.src_port is None or packet.dst_port is None):
             return
+
+        # if packet.src_ip == "192.168.1.254" or packet.dst_ip == "192.168.1.254":
+        #     return
 
         # print("Dir from fun call", self._get_packet_direction(packet, count))
 
@@ -63,10 +66,10 @@ class FlowSession:
 
         direction = self._get_packet_direction(packet, count)
         flow_key = packet_flow_key.get_packet_flow_key(packet, direction)
-        # print("FLOW ID: ", flow_key)
         # print(self.flows.values())
         # print(direction)
         flow = self.flows.get((flow_key, count))
+        # print("FLOW: ", flow)
 
         self.packet_count += 1
 
@@ -113,9 +116,9 @@ class FlowSession:
         """
         Remove flows that are either expired or reached the garbage collection threshold
         """
-        print("Performing garbage collection check...")  # Debugging line
-        print(
-            f"Current number of flows: {len(self.flows)}")  # Debugging line
+        # print("Performing garbage collection check...")  # Debugging line
+        # print(
+        #     f"Current number of flows: {len(self.flows)}")  # Debugging line
 
         keys = list(self.flows.keys())
         for k in keys:
@@ -198,8 +201,8 @@ class FlowSession:
                 result = ai_model.predict(features)
                 if result is not None:
                     data["prediction"] = f"{result}"
+                    print("Prediction: ", result)
                     print(datetime.datetime.now() - datetime.datetime.strptime(data["timestamp"], "%Y-%m-%d %H:%M:%S"))
-                    print(result)
                     asyncio.run(self.communication.communicate(data))
                 del self.flows[k]
 

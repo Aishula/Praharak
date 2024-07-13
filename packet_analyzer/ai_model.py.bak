@@ -1,10 +1,10 @@
 import numpy as np
 from tensorflow.keras.models import load_model
 from datetime import datetime
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+import pickle
 
-
-def convert_to_numeric(data):
-    return [int(float(i)) if float(i).is_integer() else float(i) for i in data]
 
 # Function to convert timestamp string to Unix timestamp
 def convert_timestamp_to_int(timestamp):
@@ -17,28 +17,87 @@ class AIModel:
     def __init__(self, model_path, sequence_length=10):
         self.model = load_model(model_path)
         self.sequence_length = sequence_length
+        self.non_binary_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37, 38, 39, 40, 41, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68]
+        self.binary_indices = [32, 42, 43, 44, 45, 46, 47, 48]
         self.buffer = []
 
-    # def preprocess_data(self, data):
-    #     data = convert_to_numeric(data)
-    #     return data
+    def convert_to_numeric(self, data):
+        # print(f"Original data: {data}")  # Debug print
+
+        if not isinstance(data, list):
+            raise ValueError("Input data must be a list representing a single row.")
+
+        for i in range(len(data)):
+            try:
+                float_value = float(data[i])
+                if float_value.is_integer():
+                    data[i] = int(float_value)
+                else:
+                    data[i] = float_value
+            except ValueError:
+                raise ValueError(f"Unable to convert element at index {i} to int or float: {data[i]}")
+
+        # print(f"Numeric data: {data}")  # Debug print
+        return data
+
+    def preprocess_data(self, data):
+        # df = pd.DataFrame([data])
+        data[2] = convert_timestamp_to_int(data[2])
+        # print("timestamp applied")
+        # print(data)
+        data = self.convert_to_numeric(data)
+        # print("numeric done")
+        # print(data)
+        # if data.ndim == 1:
+        # Convert list to NumPy array
+        data = np.array(data)
+        data = data.reshape(1, -1)
+
+        # Apply MinMaxScaler only to non-binary columns
+        # print("After reshape")
+        # print(data)
+        # Extract non-binary data based on provided indices
+        non_binary_data = data[:, self.non_binary_indices]
+        # print("Non-binary data before scaling:")
+        # print(non_binary_data)
+
+        # Fit and transform the non-binary data
+        # Load scaler from file
+        with open('utils/minmax_scaler_v2.pkl', 'rb') as f:
+            scaler = pickle.load(f)
+        scaled_non_binary_data = scaler.transform(non_binary_data)
+        # print("Scaled non-binary data:")
+        # print(scaled_non_binary_data)
+
+        # Update the original data array with the scaled non-binary data
+        data[:, self.non_binary_indices] = scaled_non_binary_data
+        # print("Data after updating with scaled non-binary data:")
+        # print(data)
+
+        # Flatten the data (if required)
+        # flattened_data = data.flatten()
+        np.set_printoptions(precision=15, suppress=True)  # Set precision and suppress scientific notation
+        # print("Scaled data (full precision):")
+        # print(data)
+        # print("Scaler done")
+        return data
 
     def create_sequence(self, data):
-        self.buffer.append(data)  # Add new data to the buffer
+        self.buffer.append(data)
+        # print("Buffer:", self.buffer)
         if len(self.buffer) < self.sequence_length:
             return None  # Insufficient data for a full sequence
         else:
-            # Extract the last 'sequence_length' elements from the buffer
+            # Extract the last 'sequence_length' elements from buffer
+            # print("sequence is creating...")
             sequence = self.buffer[-self.sequence_length:]
-            # Trim the buffer to the last 'sequence_length' elements to avoid excessive growth
-            self.buffer = self.buffer[-self.sequence_length:]
+            # sequence = self.preprocess_data(sequence)
             return sequence
 
     def predict(self, data):
-        print("Predicting...")
+        # print("Predicting...")
         # Predict for a single data row
-        # data = self.preprocess_data(data)
-        data = convert_to_numeric(data)
+        data = self.preprocess_data(data)
         # print("After preprocessing:", data)
         sequence = self.create_sequence(data)
         # print("after sequence:", sequence)
@@ -47,19 +106,25 @@ class AIModel:
             return None
 
         sequence = np.array(sequence)
+        # print(sequence.shape[1])
         # print(sequence.shape)
         # Reshape for LSTM input (assuming sequence_length x num_features)
-        sequence = sequence.reshape((1, self.sequence_length, sequence.shape[1]))
+        sequence = sequence.reshape((1, self.sequence_length, sequence.shape[2]))
 
         # Debugging: Check the reshaped sequence shape
         # print("Reshaped sequence shape:", sequence.shape)
+        # print(sequence)
+        # raw_prediction = self.model.predict(sequence)
+        # print("Raw prediction", raw_prediction)
         prediction = self.model.predict(sequence)[0][0]
+        # print("Prediction", prediction)
         # After prediction, remove the oldest element from the buffer
-        # self.buffer.pop(0)
+        self.buffer.pop(0)
+        # print((prediction > 0.5).astype(int))
         return (prediction > 0.5).astype(int)
 
 
-ai_model = AIModel("utils/model_train_praharak_v1.h5")
+ai_model = AIModel("utils/model_train_praharak_v2.h5")
 
 
 """
