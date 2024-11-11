@@ -1,12 +1,12 @@
 import datetime
-
+import csv
 from features import packet_flow_key
 from flow import Flow
 from features.network_information import Packet
 from features import PacketDirection
 from communication import Communication
 import asyncio
-from ai_model import ai_model, convert_timestamp_to_int
+from ai_model import ai_model
 
 
 class FlowSession:
@@ -21,6 +21,12 @@ class FlowSession:
         self.garbage_collection_threshold = 100  # After 100 packet processed
         self.packet_count = 0
         self.communication = Communication()
+        self.csv_file = open('flow_results.csv', 'w', newline='')  # Open CSV file for writing
+        self.csv_writer = csv.writer(self.csv_file)  # Create CSV writer object
+        self.csv_writer.writerow(
+            ['src_mac', 'dst_mac', 'src_ip', 'dst_ip', 'src_port', 'dst_port', 'protocol', 'flow_duration',
+             'flow_bytes_s', 'tot_delay', 'pred_delay', 'prediction'])
+
 
     def process_packet(self, raw_data, timestamp):
         """
@@ -198,11 +204,22 @@ class FlowSession:
                     data["idle_max"],  # 68
                     data["idle_min"],  # 69
                 ]
+                before_pred = datetime.datetime.now()
                 result = ai_model.predict(features)
                 if result is not None:
                     data["prediction"] = f"{result}"
                     print("Prediction: ", result)
-                    print(datetime.datetime.now() - datetime.datetime.strptime(data["timestamp"], "%Y-%m-%d %H:%M:%S"))
+                    tot_delay = datetime.datetime.now() - datetime.datetime.strptime(data["timestamp"], "%Y-%m-%d %H:%M:%S")
+                    pred_delay = datetime.datetime.now() - before_pred
+
+                    self.csv_writer.writerow([
+                        data['src_mac'], data['dst_mac'],
+                        data['src_ip'], data['dst_ip'],
+                        data['src_port'], data['dst_port'],
+                        data['protocol'], data['flow_duration'],
+                        data['flow_bytes_s'], tot_delay,
+                        pred_delay, data['prediction']
+                    ])
                     asyncio.run(self.communication.communicate(data))
                 del self.flows[k]
 
@@ -221,3 +238,14 @@ class FlowSession:
             return PacketDirection.REVERSE
         else:
             return PacketDirection.FORWARD  # First packet in a new flow
+
+
+    def close(self):
+        """
+        Close the CSV file to ensure data is written properly.
+        """
+        self.csv_file.close()
+
+
+    def __del__(self):
+        self.close()

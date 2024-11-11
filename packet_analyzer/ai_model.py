@@ -1,65 +1,71 @@
 import numpy as np
 from tensorflow.keras.models import load_model
 from datetime import datetime
+import pickle
 
 
-def convert_to_numeric(data):
-    return [int(float(i)) if float(i).is_integer() else float(i) for i in data]
-
-# Function to convert timestamp string to Unix timestamp
-def convert_timestamp_to_int(timestamp):
-    dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
-    unix_timestamp = int(dt.timestamp())
-    return unix_timestamp
+# # Function to convert timestamp string to Unix timestamp
+# def convert_timestamp_to_int(timestamp):
+#     dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+#     unix_timestamp = int(dt.timestamp())
+#     return unix_timestamp
+#
+#
+# def apply_scalar(data):
+#     with open("utils/minmax_scaler_v4.pkl", "rb") as f:
+#         scaler = pickle.load(f)
+#         return scaler.transform(data)
 
 
 class AIModel:
-    def __init__(self, model_path, sequence_length=10):
+    def __init__(self, model_path, scaler_path, sequence_length=10):
         self.model = load_model(model_path)
         self.sequence_length = sequence_length
         self.buffer = []
 
-    # def preprocess_data(self, data):
-    #     data = convert_to_numeric(data)
-    #     return data
+        with open(scaler_path, "rb") as f:
+            self.scaler = pickle.load(f)
+
+    def apply_scalar(self, data):
+        return self.scaler.transform(data)
 
     def create_sequence(self, data):
-        self.buffer.append(data)  # Add new data to the buffer
+        self.buffer.append(data)
+        if len(self.buffer) > self.sequence_length:
+            self.buffer.pop(0)
+
         if len(self.buffer) < self.sequence_length:
-            return None  # Insufficient data for a full sequence
-        else:
-            # Extract the last 'sequence_length' elements from the buffer
-            sequence = self.buffer[-self.sequence_length:]
-            # Trim the buffer to the last 'sequence_length' elements to avoid excessive growth
-            self.buffer = self.buffer[-self.sequence_length:]
-            return sequence
+            return None
+        return list(self.buffer)
+
+    def convert_to_numeric(self, data):
+        return [int(float(i)) if float(i).is_integer() else float(i) for i in data]
 
     def predict(self, data):
         print("Predicting...")
-        # Predict for a single data row
-        # data = self.preprocess_data(data)
-        data = convert_to_numeric(data)
-        # print("After preprocessing:", data)
+        # data = np.array(self.convert_to_numeric(data)).reshape(1, -1)
+        # print("Before scaling", data)
+        # data = self.apply_scalar(data)  # Use instance method for scaling
+        # print("After scaling", data)
+        data = np.array(self.convert_to_numeric(data))
+        # sequence = self.create_sequence(data.flatten())
         sequence = self.create_sequence(data)
         # print("after sequence:", sequence)
         if sequence is None:
             print("Insufficient data to make prediction")
             return None
 
-        sequence = np.array(sequence)
-        # print(sequence.shape)
         # Reshape for LSTM input (assuming sequence_length x num_features)
-        sequence = sequence.reshape((1, self.sequence_length, sequence.shape[1]))
+        sequence = np.array(sequence).reshape((1, self.sequence_length, -1))
 
         # Debugging: Check the reshaped sequence shape
         # print("Reshaped sequence shape:", sequence.shape)
         prediction = self.model.predict(sequence)[0][0]
-        # After prediction, remove the oldest element from the buffer
-        # self.buffer.pop(0)
+        print("After prediction", prediction)
         return (prediction > 0.5).astype(int)
 
 
-ai_model = AIModel("utils/model_train_praharak_v1.h5")
+ai_model = AIModel("utils/model_train_praharak_v1.h5", "utils/minmax_scaler_v4.pkl")
 
 
 """
